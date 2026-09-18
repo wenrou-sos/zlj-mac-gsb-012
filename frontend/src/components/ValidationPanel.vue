@@ -32,6 +32,10 @@ const grouped = computed(() => {
     </div>
 
     <template v-else>
+      <div v-if="validation.rule_version" class="rule-version">
+        本次校验依据：<strong>{{ validation.rule_version.name }} {{ validation.rule_version.version }}</strong>
+        <span v-if="validation.rule_version.effective_date">（{{ validation.rule_version.effective_date }} 起生效）</span>
+      </div>
       <div :class="['summary', validation.status]">
         <div class="verdict">
           <span class="verdict-icon">
@@ -71,6 +75,19 @@ const grouped = computed(() => {
   padding: 40px 0;
   text-align: center;
   color: var(--text-muted);
+}
+
+.rule-version {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: #f4f7f4;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+}
+.rule-version strong {
+  color: var(--primary-dark);
 }
 
 .summary {

@@ -35,5 +35,36 @@ class LabelIn(BaseModel):
 
 class LabelOut(LabelIn):
     id: int
+    rule_package_id: int | None = None
+    rule_package_version: str = ""
+    last_validated_at: str | None = None
+    last_validation_status: str = ""
     created_at: str | None = None
     updated_at: str | None = None
+
+
+class RuleConfigIn(BaseModel):
+    """规则包中单条规则的配置。"""
+
+    code: str
+    enabled: bool = True
+    params: dict = Field(default_factory=dict)
+
+
+class RulePackageCreate(BaseModel):
+    name: str = ""
+    version: str = ""
+    remark: str = ""
+    base_id: int | None = None  # 从哪个规则包克隆规则，缺省用内置默认
+
+
+class RulePackageUpdate(BaseModel):
+    name: str | None = None
+    version: str | None = None
+    remark: str | None = None
+    effective_date: str | None = None
+    rules: list[RuleConfigIn] | None = None
+
+
+class RulePackagePublish(BaseModel):
+    effective_date: str  # YYYY-MM-DD，允许未来日期（到期自动生效）

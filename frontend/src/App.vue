@@ -4,6 +4,7 @@ import { api } from './api'
 import LabelForm from './components/LabelForm.vue'
 import ValidationPanel from './components/ValidationPanel.vue'
 import LabelPreview from './components/LabelPreview.vue'
+import RuleCenter from './components/RuleCenter.vue'
 
 const NUMERIC_FIELDS = [
   'net_content_value', 'energy_kj', 'protein_g', 'fat_g',
@@ -39,6 +40,7 @@ const validation = ref(null)
 const validating = ref(false)
 const saving = ref(false)
 const activeTab = ref('validate')
+const view = ref('labels')
 const toast = ref('')
 
 let toastTimer = null
@@ -169,21 +171,35 @@ onMounted(async () => {
         </div>
       </div>
       <div class="actions">
-        <select class="saved-select" :value="currentId ?? ''" @change="onSelectLabel">
-          <option value="" disabled>选择已保存的标签…</option>
-          <option v-for="item in labels" :key="item.id" :value="item.id">
-            {{ item.product_name || '(未命名)' }}{{ item.brand ? ' · ' + item.brand : '' }}
-          </option>
-        </select>
-        <button class="btn ghost" @click="newLabel">＋ 新建</button>
-        <button class="btn primary" :disabled="saving" @click="save">
-          {{ saving ? '保存中…' : currentId ? '保存修改' : '保存标签' }}
-        </button>
-        <button v-if="currentId" class="btn danger" @click="remove">删除</button>
+        <div class="view-switch">
+          <button :class="['switch-btn', { active: view === 'labels' }]" @click="view = 'labels'">
+            标签校验
+          </button>
+          <button :class="['switch-btn', { active: view === 'rules' }]" @click="view = 'rules'">
+            规则中心
+          </button>
+        </div>
+        <template v-if="view === 'labels'">
+          <select class="saved-select" :value="currentId ?? ''" @change="onSelectLabel">
+            <option value="" disabled>选择已保存的标签…</option>
+            <option v-for="item in labels" :key="item.id" :value="item.id">
+              {{ item.product_name || '(未命名)' }}{{ item.brand ? ' · ' + item.brand : ''
+              }}{{ item.rule_package_version ? ' · ' + item.rule_package_version : ''
+              }}{{ item.last_validation_status === 'fail' ? ' ✕' : item.last_validation_status === 'warning' ? ' ⚠' : '' }}
+            </option>
+          </select>
+          <button class="btn ghost" @click="newLabel">＋ 新建</button>
+          <button class="btn primary" :disabled="saving" @click="save">
+            {{ saving ? '保存中…' : currentId ? '保存修改' : '保存标签' }}
+          </button>
+          <button v-if="currentId" class="btn danger" @click="remove">删除</button>
+        </template>
       </div>
     </header>
 
-    <main class="content">
+    <RuleCenter v-if="view === 'rules'" @toast="showToast" @labels-changed="refreshList" />
+
+    <main v-else class="content">
       <section class="panel form-panel">
         <LabelForm
           :form="form"
@@ -276,6 +292,28 @@ onMounted(async () => {
 
 .saved-select {
   width: 220px;
+}
+
+.view-switch {
+  display: flex;
+  background: #e8ece8;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.switch-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border-radius: 8px;
+}
+.switch-btn.active {
+  background: #fff;
+  color: var(--primary-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .btn.primary {
