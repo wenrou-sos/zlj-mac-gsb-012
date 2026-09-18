@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    container_name: label-check-platform
+    ports:
+      - "8000:8000"
+    volumes:
+      # SQLite 数据持久化
+      - label-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  label-data:

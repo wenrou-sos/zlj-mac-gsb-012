@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+frontend/dist/
+
+# 后端运行时产物
+backend/static/
+backend/data/
+*.db
+
+# 系统文件
+.DS_Store
+*.log
