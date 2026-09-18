@@ -4,6 +4,7 @@ import { api } from './api'
 import LabelForm from './components/LabelForm.vue'
 import ValidationPanel from './components/ValidationPanel.vue'
 import LabelPreview from './components/LabelPreview.vue'
+import RuleCenter from './components/RuleCenter.vue'
 
 const NUMERIC_FIELDS = [
   'net_content_value', 'energy_kj', 'protein_g', 'fat_g',
@@ -39,6 +40,7 @@ const validation = ref(null)
 const validating = ref(false)
 const saving = ref(false)
 const activeTab = ref('validate')
+const view = ref('workspace') // workspace | rules
 const toast = ref('')
 
 let toastTimer = null
@@ -147,6 +149,10 @@ function fillAllergenStatement() {
   form.allergen_statement = `本品含有${detected.join('、')}及其制品。`
 }
 
+function statusText(status) {
+  return { pass: '通过', warning: '警告', fail: '未通过' }[status] || status
+}
+
 onMounted(async () => {
   try {
     await refreshList()
@@ -169,21 +175,34 @@ onMounted(async () => {
         </div>
       </div>
       <div class="actions">
-        <select class="saved-select" :value="currentId ?? ''" @change="onSelectLabel">
-          <option value="" disabled>选择已保存的标签…</option>
-          <option v-for="item in labels" :key="item.id" :value="item.id">
-            {{ item.product_name || '(未命名)' }}{{ item.brand ? ' · ' + item.brand : '' }}
-          </option>
-        </select>
-        <button class="btn ghost" @click="newLabel">＋ 新建</button>
-        <button class="btn primary" :disabled="saving" @click="save">
-          {{ saving ? '保存中…' : currentId ? '保存修改' : '保存标签' }}
-        </button>
-        <button v-if="currentId" class="btn danger" @click="remove">删除</button>
+        <div class="view-switch">
+          <button :class="{ active: view === 'workspace' }" @click="view = 'workspace'">标签校验</button>
+          <button :class="{ active: view === 'rules' }" @click="view = 'rules'">规则中心</button>
+        </div>
+        <template v-if="view === 'workspace'">
+          <select class="saved-select" :value="currentId ?? ''" @change="onSelectLabel">
+            <option value="" disabled>选择已保存的标签…</option>
+            <option v-for="item in labels" :key="item.id" :value="item.id">
+              {{ item.product_name || '(未命名)' }}{{ item.brand ? ' · ' + item.brand : '' }}
+              <template v-if="item.latest_status">
+                〔v{{ item.latest_package_version }} {{ statusText(item.latest_status) }}〕
+              </template>
+            </option>
+          </select>
+          <button class="btn ghost" @click="newLabel">＋ 新建</button>
+          <button class="btn primary" :disabled="saving" @click="save">
+            {{ saving ? '保存中…' : currentId ? '保存修改' : '保存标签' }}
+          </button>
+          <button v-if="currentId" class="btn danger" @click="remove">删除</button>
+        </template>
       </div>
     </header>
 
-    <main class="content">
+    <main v-if="view === 'rules'" class="rules-view">
+      <RuleCenter @toast="showToast" />
+    </main>
+
+    <main v-else class="content">
       <section class="panel form-panel">
         <LabelForm
           :form="form"
@@ -209,6 +228,10 @@ onMounted(async () => {
           >
             标签预览
           </button>
+          <span v-if="validation?.rule_package" class="rule-ref" :title="'规则包：' + validation.rule_package.package_name">
+            {{ validation.rule_package.package_status === 'draft' ? '草稿试用' : '规则版本' }}
+            v{{ validation.rule_package.package_version }}
+          </span>
         </div>
         <ValidationPanel
           v-show="activeTab === 'validate'"
@@ -272,6 +295,37 @@ onMounted(async () => {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.view-switch {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+.view-switch button {
+  border-radius: 0;
+  background: #fff;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 14px;
+}
+.view-switch button.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.rules-view {
+  padding-top: 8px;
+}
+
+.rule-ref {
+  margin-left: auto;
+  padding-right: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .saved-select {

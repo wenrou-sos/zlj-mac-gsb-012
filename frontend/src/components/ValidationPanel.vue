@@ -32,6 +32,13 @@ const grouped = computed(() => {
     </div>
 
     <template v-else>
+      <div v-if="validation.rule_package" class="rule-line">
+        <span class="rule-dot"></span>
+        本次校验使用：{{ validation.rule_package.package_name }}
+        <b>v{{ validation.rule_package.package_version }}</b>
+        <span v-if="validation.rule_package.package_status === 'draft'" class="draft-flag">草稿试用 · 不留痕</span>
+        <span v-else-if="validation.record_id" class="record-flag">已记录 #{{ validation.record_id }}</span>
+      </div>
       <div :class="['summary', validation.status]">
         <div class="verdict">
           <span class="verdict-icon">
@@ -71,6 +78,39 @@ const grouped = computed(() => {
   padding: 40px 0;
   text-align: center;
   color: var(--text-muted);
+}
+
+.rule-line {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: #f4f6f4;
+  border-radius: 8px;
+  padding: 7px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rule-line b {
+  color: var(--primary-dark);
+}
+.rule-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.draft-flag {
+  background: #fff8e1;
+  color: #b26a00;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.record-flag {
+  color: var(--primary);
+  font-size: 11px;
 }
 
 .summary {
